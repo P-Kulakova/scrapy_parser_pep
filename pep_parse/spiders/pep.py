@@ -1,16 +1,9 @@
 """Паук для сбора документов PEP с сайта peps.python.org."""
 
-import re
-from urllib.parse import urlparse
-
 import scrapy
 from scrapy.http import TextResponse
 
 from pep_parse.items import PepParseItem
-
-
-PEP_PATH_PATTERN = re.compile(r'/pep-\d+/')
-TITLE_SEPARATOR = ' – '
 
 
 class PepSpider(scrapy.Spider):
@@ -22,40 +15,22 @@ class PepSpider(scrapy.Spider):
 
     def parse(self, response: TextResponse, **kwargs):
         """Создать запросы к страницам документов PEP."""
-        for href in response.css('a::attr(href)').getall():
-            pep_url = response.urljoin(href)
-            pep_path = urlparse(pep_url).path
-
-            if PEP_PATH_PATTERN.fullmatch(pep_path):
-                yield response.follow(
-                    pep_url,
-                    callback=self.parse_pep,
-                )
+        for tr in response.css('section#numerical-index tbody tr'):
+            pep_link = tr.css('a').attrib['href']
+            yield response.follow(
+                pep_link,
+                callback=self.parse_pep,
+            )
 
     def parse_pep(self, response: TextResponse) -> PepParseItem:
         """Извлечь номер, название и статус документа PEP."""
-        title = ''.join(
-            response.css('h1.page-title::text').getall()
-        ).strip()
-
-        pep_label, separator, name = title.partition(TITLE_SEPARATOR)
-
-        if not separator:
-            raise ValueError(f'Некорректный заголовок PEP: {title!r}')
-
-        status_parts = response.xpath(
-            '(//dt[contains(normalize-space(), "Status")]/'
-            'following-sibling::dd[1])[1]'
-            '//text()[normalize-space()]'
-        ).getall()
-
-        status = ' '.join(
-            part.strip()
-            for part in status_parts
-        )
+        table = response.css('dl.field-list')
+        number = table.css('dt:contains("PEP") + dd::text').get()
+        name = table.css('dt:contains("Title") + dd::text').get()
+        status = table.css('dt:contains("Status") + dd::text').get()
 
         return PepParseItem(
-            number=pep_label.removeprefix('PEP ').strip(),
-            name=name.strip(),
+            number=number,
+            name=name,
             status=status,
         )
