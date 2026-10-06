@@ -1,29 +1,72 @@
-# Парсер документов PEP
+# PEP Parser 🕷️
 
-Проект представляет собой Scrapy-парсер, который собирает информацию обо всех документах PEP с сайта https://peps.python.org/.
+A Scrapy-based parser that collects information about Python Enhancement Proposals (PEPs) from the official Python PEP website.
 
-Для каждого документа парсер получает:
+The parser extracts the number, title, and current status of each PEP and generates CSV reports with the collected data and status statistics.
 
-* номер PEP;
-* название;
-* текущий статус.
+## Features
 
-После завершения работы данные сохраняются в два CSV-файла.
+- Crawls the official Python PEP index
+- Follows links to individual PEP pages
+- Extracts PEP number, title, and status
+- Exports collected data to CSV
+- Calculates the number of PEPs for each status
+- Generates a separate summary report
+- Automatically adds timestamps to output filenames
+- Includes automated tests with pytest
 
-## Результаты работы
+## Tech Stack
 
-После запуска парсера в каталоге `results/` создаются:
+- Python
+- Scrapy
+- CSS selectors
+- CSV
+- pytest
+- flake8
 
-* `pep_ДатаВремя.csv` — список всех найденных документов PEP;
-* `status_summary_ДатаВремя.csv` — сводная таблица с количеством документов в каждом статусе.
-
-Основной файл содержит поля:
+## Project Structure
 
 ```text
-number, name, status
+scrapy_parser_pep/
+├── pep_parse/
+│   ├── spiders/
+│   │   └── pep.py        # PEP spider
+│   ├── items.py          # Scraped data structure
+│   ├── pipelines.py      # Status statistics and summary export
+│   └── settings.py       # Scrapy configuration
+├── results/              # Generated CSV reports
+├── tests/                # Automated tests
+├── requirements.txt
+└── scrapy.cfg
 ```
 
-Пример:
+## How It Works
+
+The spider starts from the official PEP index and collects links to individual PEP documents.
+
+For each PEP page, it extracts:
+
+- PEP number
+- Title
+- Status
+
+Scrapy's Feed Exporter saves the collected data to:
+
+```text
+results/pep_<timestamp>.csv
+```
+
+The custom pipeline counts PEPs by status and generates a second report:
+
+```text
+results/status_summary_<timestamp>.csv
+```
+
+The summary also contains the total number of processed PEP documents.
+
+## Output Example
+
+Main report:
 
 ```csv
 number,name,status
@@ -32,15 +75,7 @@ number,name,status
 20,The Zen of Python,Active
 ```
 
-Сводный файл содержит два столбца:
-
-```text
-Статус,Количество
-```
-
-В последней строке указывается значение `Total` и общее количество собранных документов.
-
-Пример:
+Status summary:
 
 ```csv
 Статус,Количество
@@ -50,65 +85,60 @@ Final,315
 Total,392
 ```
 
-При каждом новом запуске создаётся новая пара файлов с текущей датой и временем в имени.
+## Installation
 
-## Технологии
-
-* Python 3.10;
-* Scrapy;
-* CSV;
-* pytest;
-* flake8.
-
-## Установка
-
-Клонируйте репозиторий и перейдите в каталог проекта:
+Clone the repository:
 
 ```bash
-git clone <адрес_репозитория>
+git clone https://github.com/P-Kulakova/scrapy_parser_pep.git
 cd scrapy_parser_pep
 ```
 
-Создайте виртуальное окружение.
+Create a virtual environment:
 
-### Git Bash
+### Windows / Git Bash
 
 ```bash
 py -3.10 -m venv venv
 source venv/Scripts/activate
 ```
 
-Установите зависимости:
+### Linux / macOS
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install the dependencies:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
-## Запуск парсера
+## Usage
 
-Запустите паука из корневого каталога проекта:
+Run the spider from the project root:
 
 ```bash
 scrapy crawl pep
 ```
 
-После завершения работы результаты появятся в каталоге:
+After the spider finishes, two CSV files will be created in the `results/` directory.
 
-```text
-results/
+## Testing
+
+Run the automated tests:
+
+```bash
+pytest
 ```
 
-## Как работает проект
+## Author
 
-Паук открывает главную страницу сайта PEP, находит ссылки на отдельные документы и переходит по ним.
+**Polina Kulakova**
 
-На странице каждого документа извлекаются:
+Python Backend Developer
 
-* номер;
-* название;
-* статус.
-
-Основной CSV-файл создаётся средствами Scrapy Feed Exporter.
-
-Отдельный Pipeline подсчитывает количество документов в каждом статусе и после завершения работы паука формирует сводный CSV-файл.
+GitHub: [P-Kulakova](https://github.com/P-Kulakova)
